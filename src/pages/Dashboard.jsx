@@ -1,11 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { 
   BarChart3, 
   Files, 
   FilePlus2, 
-  PieChart, 
   Search, 
   ShieldAlert, 
   Users, 
@@ -35,7 +33,7 @@ const MOCK_CASES = [
 ];
 
 // Helper function to generate stats based on user role
-const generateStatsByRole = (role: string) => {
+const generateStatsByRole = (role) => {
   const commonStats = [
     { title: 'Total Cases', value: '137', icon: Files, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' },
     { title: 'Open Cases', value: '42', icon: ShieldAlert, color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' },
@@ -64,7 +62,7 @@ const generateStatsByRole = (role: string) => {
 };
 
 // Quick actions based on role
-const getQuickActions = (role: string) => {
+const getQuickActions = (role) => {
   const commonActions = [
     { title: 'Search Cases', icon: Search, action: () => toast.info('Search Cases functionality would open here') },
     { title: 'View Calendar', icon: Calendar, action: () => toast.info('Calendar view would open here') },
@@ -93,7 +91,7 @@ const getQuickActions = (role: string) => {
   ];
 };
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const { isAuthenticated, user, checkAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -120,12 +118,12 @@ const Dashboard: React.FC = () => {
   
   // Columns for the case data table
   const caseColumns = [
-    { header: 'Case Number', accessor: 'caseNumber' as const },
-    { header: 'Type', accessor: 'type' as const },
+    { header: 'Case Number', accessor: 'caseNumber' },
+    { header: 'Type', accessor: 'type' },
     { 
       header: 'Status', 
-      accessor: 'status' as const,
-      render: (value: string) => {
+      accessor: 'status',
+      render: (value) => {
         let color = '';
         switch (value) {
           case 'Open':
@@ -147,8 +145,8 @@ const Dashboard: React.FC = () => {
         );
       }
     },
-    { header: 'Date Reported', accessor: 'dateReported' as const },
-    { header: 'Assigned To', accessor: 'assignedTo' as const },
+    { header: 'Date Reported', accessor: 'dateReported' },
+    { header: 'Assigned To', accessor: 'assignedTo' },
   ];
   
   if (isLoading) {

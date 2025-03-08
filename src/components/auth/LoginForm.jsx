@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { Eye, EyeOff, Shield, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
-const LoginForm: React.FC = () => {
+const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -13,7 +12,7 @@ const LoginForm: React.FC = () => {
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -41,7 +40,7 @@ const LoginForm: React.FC = () => {
     { role: 'Admin', email: 'admin@crms.com', password: 'password123' },
   ];
   
-  const fillCredentials = (email: string, password: string) => {
+  const fillCredentials = (email, password) => {
     setEmail(email);
     setPassword(password);
   };

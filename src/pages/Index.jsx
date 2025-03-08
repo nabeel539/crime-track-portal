@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, BarChart3, ClipboardCheck, Search, UserCheck, Lock } from 'lucide-react';
@@ -6,7 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import Navbar from '@/components/layout/Navbar';
 import LoginForm from '@/components/auth/LoginForm';
 
-const Index: React.FC = () => {
+const Index = () => {
   const { isAuthenticated, checkAuth } = useAuthStore();
   const navigate = useNavigate();
   

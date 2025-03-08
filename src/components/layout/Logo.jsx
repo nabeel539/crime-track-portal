@@ -3,13 +3,7 @@ import React from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-interface LogoProps {
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'minimal';
-  withText?: boolean;
-}
-
-const Logo: React.FC<LogoProps> = ({ 
+const Logo = ({ 
   size = 'md', 
   variant = 'default',
   withText = true 
