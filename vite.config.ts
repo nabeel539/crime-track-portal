@@ -32,6 +32,6 @@ export default defineConfig(({ mode }: ConfigEnv) => ({
   // Properly set esbuild config with correct TypeScript types
   esbuild: {
     jsxInject: `import React from 'react'`,
-    jsx: 'transform',  // Changed from 'react-jsx' to 'transform' which is a valid option
+    jsx: 'transform' as const,  // Use 'as const' to ensure the literal type is preserved
   },
 }));
