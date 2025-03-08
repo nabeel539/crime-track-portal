@@ -25,4 +25,9 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist',
     emptyOutDir: true,
   },
+  // Override TypeScript configuration to work with JavaScript
+  esbuild: {
+    jsxInject: `import React from 'react'`,
+    jsx: 'react-jsx',
+  },
 }));

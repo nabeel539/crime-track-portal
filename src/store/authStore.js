@@ -3,7 +3,32 @@ import { create } from 'zustand';
 import api from '../lib/axios';
 import { toast } from 'sonner';
 
-// Mock users for POC
+// Define types as JSDoc comments for better IDE support
+/**
+ * @typedef {'officer' | 'investigator' | 'admin'} UserRole
+ */
+
+/**
+ * @typedef {Object} User
+ * @property {string} id
+ * @property {string} email
+ * @property {string} name
+ * @property {UserRole} role
+ */
+
+/**
+ * @typedef {Object} AuthState
+ * @property {User|null} user
+ * @property {string|null} token
+ * @property {boolean} isAuthenticated
+ * @property {boolean} isLoading
+ * @property {string|null} error
+ * @property {function(string, string): Promise<void>} login
+ * @property {function(): void} logout
+ * @property {function(): Promise<boolean>} checkAuth
+ */
+
+// For the POC, we'll simulate authentication with mock data
 const mockUsers = [
   {
     id: '1',
