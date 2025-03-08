@@ -1,240 +1,400 @@
+
 import React, { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { 
-  BarChart3, 
-  Files, 
-  FilePlus2, 
-  Search, 
-  ShieldAlert, 
-  Users, 
-  Calendar,
-  Shield,
-  FileText,
-  ClipboardCheck,
-  UserSearch
-} from 'lucide-react';
+import { useNavigate, Routes, Route } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import Navbar from '@/components/layout/Navbar';
-import DataDisplay from '@/components/ui/DataDisplay';
+import { 
+  Home, 
+  FileText, 
+  BarChart3, 
+  LogOut, 
+  ChevronRight, 
+  Menu, 
+  X, 
+  Shield,
+  User,
+  Settings,
+  Bell
+} from 'lucide-react';
+import Logo from '@/components/layout/Logo';
+import CaseManagement from './CaseManagement';
+import CrimeReportForm from '@/components/crime/CrimeReportForm';
+import CaseDetail from './CaseDetail';
+import Analytics from './Analytics';
 import { toast } from 'sonner';
 
-// Mock data for the dashboard
-const MOCK_CASES = [
-  { id: '1', caseNumber: 'CR-2023-0001', type: 'Theft', status: 'Open', dateReported: '2023-04-15', assignedTo: 'John Doe' },
-  { id: '2', caseNumber: 'CR-2023-0002', type: 'Assault', status: 'Under Investigation', dateReported: '2023-04-17', assignedTo: 'Jane Smith' },
-  { id: '3', caseNumber: 'CR-2023-0003', type: 'Vandalism', status: 'Closed', dateReported: '2023-04-10', assignedTo: 'John Doe' },
-  { id: '4', caseNumber: 'CR-2023-0004', type: 'Burglary', status: 'Open', dateReported: '2023-04-22', assignedTo: 'Jane Smith' },
-  { id: '5', caseNumber: 'CR-2023-0005', type: 'Fraud', status: 'Under Investigation', dateReported: '2023-04-05', assignedTo: 'Michael Johnson' },
-  { id: '6', caseNumber: 'CR-2023-0006', type: 'Robbery', status: 'Open', dateReported: '2023-04-28', assignedTo: 'Sarah Williams' },
-  { id: '7', caseNumber: 'CR-2023-0007', type: 'Drug Possession', status: 'Under Investigation', dateReported: '2023-04-11', assignedTo: 'Michael Johnson' },
-  { id: '8', caseNumber: 'CR-2023-0008', type: 'Assault', status: 'Closed', dateReported: '2023-04-03', assignedTo: 'Sarah Williams' },
-  { id: '9', caseNumber: 'CR-2023-0009', type: 'Theft', status: 'Open', dateReported: '2023-04-25', assignedTo: 'John Doe' },
-  { id: '10', caseNumber: 'CR-2023-0010', type: 'Vandalism', status: 'Closed', dateReported: '2023-04-08', assignedTo: 'Jane Smith' },
-];
-
-// Helper function to generate stats based on user role
-const generateStatsByRole = (role) => {
-  const commonStats = [
-    { title: 'Total Cases', value: '137', icon: Files, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' },
-    { title: 'Open Cases', value: '42', icon: ShieldAlert, color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' },
-  ];
-  
-  if (role === 'admin') {
-    return [
-      ...commonStats,
-      { title: 'Officers', value: '15', icon: Users, color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' },
-      { title: 'Reports', value: '358', icon: BarChart3, color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' },
-    ];
-  } else if (role === 'investigator') {
-    return [
-      ...commonStats,
-      { title: 'Assigned', value: '28', icon: ClipboardCheck, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' },
-      { title: 'Evidence Files', value: '217', icon: FileText, color: 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400' },
-    ];
-  }
-  
-  // Default for officer
-  return [
-    ...commonStats,
-    { title: 'Filed Today', value: '3', icon: FilePlus2, color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' },
-    { title: 'Pending Review', value: '12', icon: Search, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' },
-  ];
-};
-
-// Quick actions based on role
-const getQuickActions = (role) => {
-  const commonActions = [
-    { title: 'Search Cases', icon: Search, action: () => toast.info('Search Cases functionality would open here') },
-    { title: 'View Calendar', icon: Calendar, action: () => toast.info('Calendar view would open here') },
-  ];
-  
-  if (role === 'admin') {
-    return [
-      { title: 'New User', icon: Users, action: () => toast.info('Add new user form would open here') },
-      { title: 'Generate Report', icon: BarChart3, action: () => toast.info('Report generator would open here') },
-      ...commonActions,
-      { title: 'System Log', icon: Shield, action: () => toast.info('System logs would appear here') },
-    ];
-  } else if (role === 'investigator') {
-    return [
-      { title: 'Manage Cases', icon: ClipboardCheck, action: () => toast.info('Case management would open here') },
-      { title: 'Officer Lookup', icon: UserSearch, action: () => toast.info('Officer directory would open here') },
-      ...commonActions,
-    ];
-  }
-  
-  // Default for officer
-  return [
-    { title: 'New Report', icon: FilePlus2, action: () => toast.info('New report form would open here') },
-    ...commonActions,
-    { title: 'Upload Evidence', icon: FileText, action: () => toast.info('Evidence upload form would open here') },
-  ];
-};
-
 const Dashboard = () => {
-  const { isAuthenticated, user, checkAuth } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   
-  // Check if user is authenticated
+  // Check if the user is authenticated
   useEffect(() => {
-    const verifyAuth = async () => {
+    const init = async () => {
       const isAuth = await checkAuth();
-      setIsLoading(false);
-      
       if (!isAuth) {
         navigate('/');
       }
+      setInitialized(true);
     };
     
-    verifyAuth();
+    init();
   }, [checkAuth, navigate]);
   
-  // Get stats based on user role
-  const stats = user ? generateStatsByRole(user.role) : [];
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
   
-  // Get quick actions based on user role
-  const quickActions = user ? getQuickActions(user.role) : [];
+  // Role-based navigation
+  const isOfficer = user?.role === 'officer';
+  const isInvestigator = user?.role === 'investigator';
+  const isAdmin = user?.role === 'admin';
   
-  // Columns for the case data table
-  const caseColumns = [
-    { header: 'Case Number', accessor: 'caseNumber' },
-    { header: 'Type', accessor: 'type' },
-    { 
-      header: 'Status', 
-      accessor: 'status',
-      render: (value) => {
-        let color = '';
-        switch (value) {
-          case 'Open':
-            color = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-            break;
-          case 'Under Investigation':
-            color = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-            break;
-          case 'Closed':
-            color = 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
-            break;
-          default:
-            color = 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
-        }
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>
-            {value}
-          </span>
-        );
-      }
-    },
-    { header: 'Date Reported', accessor: 'dateReported' },
-    { header: 'Assigned To', accessor: 'assignedTo' },
-  ];
+  // Navigation items based on role
+  const navItems = [
+    { name: 'Overview', icon: Home, path: '/dashboard', roles: ['officer', 'investigator', 'admin'] },
+    { name: 'Cases', icon: FileText, path: '/dashboard/cases', roles: ['officer', 'investigator', 'admin'] },
+    { name: 'Report Crime', icon: Shield, path: '/dashboard/report-crime', roles: ['officer', 'admin'] },
+    { name: 'Analytics', icon: BarChart3, path: '/dashboard/analytics', roles: ['investigator', 'admin'] },
+  ].filter(item => item.roles.includes(user?.role || ''));
   
-  if (isLoading) {
+  // Function to determine if a nav item is active
+  const isActive = (path) => {
+    const currentPath = window.location.pathname;
+    if (path === '/dashboard') {
+      return currentPath === '/dashboard';
+    }
+    return currentPath.startsWith(path);
+  };
+  
+  // Dashboard overview content - quick stats and shortcuts
+  const DashboardOverview = () => {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold text-crime-800 dark:text-white mb-6">Welcome, {user?.name}</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2 bg-white dark:bg-crime-800 rounded-xl shadow-sm border border-crime-100 dark:border-crime-700 p-6">
+            <h2 className="text-lg font-semibold text-crime-800 dark:text-white mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {isOfficer && (
+                <button 
+                  onClick={() => navigate('/dashboard/report-crime')}
+                  className="p-4 rounded-lg border border-crime-100 dark:border-crime-700 hover:bg-crime-50 dark:hover:bg-crime-700/50 transition-colors duration-150 flex items-center justify-between"
+                >
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mr-3">
+                      <Shield className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-crime-800 dark:text-white mb-1">Report New Crime</h3>
+                      <p className="text-sm text-crime-500 dark:text-crime-400">File a new crime report</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-crime-400" />
+                </button>
+              )}
+              
+              <button 
+                onClick={() => navigate('/dashboard/cases')}
+                className="p-4 rounded-lg border border-crime-100 dark:border-crime-700 hover:bg-crime-50 dark:hover:bg-crime-700/50 transition-colors duration-150 flex items-center justify-between"
+              >
+                <div className="flex items-center">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mr-3">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-crime-800 dark:text-white mb-1">Manage Cases</h3>
+                    <p className="text-sm text-crime-500 dark:text-crime-400">View and update crime cases</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-crime-400" />
+              </button>
+              
+              {(isInvestigator || isAdmin) && (
+                <button 
+                  onClick={() => navigate('/dashboard/analytics')}
+                  className="p-4 rounded-lg border border-crime-100 dark:border-crime-700 hover:bg-crime-50 dark:hover:bg-crime-700/50 transition-colors duration-150 flex items-center justify-between"
+                >
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mr-3">
+                      <BarChart3 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-crime-800 dark:text-white mb-1">View Analytics</h3>
+                      <p className="text-sm text-crime-500 dark:text-crime-400">Crime statistics and insights</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-crime-400" />
+                </button>
+              )}
+              
+              <button 
+                onClick={() => {
+                  toast.info('This feature will be available in a future update');
+                }}
+                className="p-4 rounded-lg border border-crime-100 dark:border-crime-700 hover:bg-crime-50 dark:hover:bg-crime-700/50 transition-colors duration-150 flex items-center justify-between"
+              >
+                <div className="flex items-center">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mr-3">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-crime-800 dark:text-white mb-1">My Profile</h3>
+                    <p className="text-sm text-crime-500 dark:text-crime-400">Update personal information</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-crime-400" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-crime-800 rounded-xl shadow-sm border border-crime-100 dark:border-crime-700 p-6">
+            <h2 className="text-lg font-semibold text-crime-800 dark:text-white mb-4">System Status</h2>
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 flex items-start">
+                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center mr-3 mt-0.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-medium mb-1">System Online</h3>
+                  <p className="text-sm text-green-600/80 dark:text-green-400/80">All services are running normally</p>
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-crime-500 dark:text-crime-400">Database Status</span>
+                  <span className="text-sm text-green-600 dark:text-green-400">Connected</span>
+                </div>
+                <div className="w-full h-2 bg-crime-100 dark:bg-crime-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-green-500 rounded-full" style={{ width: '98%' }}></div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-crime-500 dark:text-crime-400">User Session</span>
+                  <span className="text-sm text-blue-600 dark:text-blue-400">Active</span>
+                </div>
+                <div className="w-full h-2 bg-crime-100 dark:bg-crime-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '100%' }}></div>
+                </div>
+              </div>
+              
+              <div className="pt-4 mt-4 border-t border-crime-100 dark:border-crime-700">
+                <h3 className="font-medium text-crime-800 dark:text-white mb-3">Your Account</h3>
+                <div className="flex items-center">
+                  <div className="w-12 h-12 rounded-full bg-primary/20 text-primary flex items-center justify-center mr-3 text-xl font-semibold">
+                    {user?.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-medium text-crime-800 dark:text-white">{user?.name}</div>
+                    <div className="text-sm text-crime-500 dark:text-crime-400 flex items-center">
+                      <span className="capitalize mr-2">{user?.role}</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-crime-800 rounded-xl shadow-sm border border-crime-100 dark:border-crime-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-crime-800 dark:text-white">System Updates</h2>
+            <button className="text-sm text-primary hover:underline">View all</button>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-start p-3 rounded-lg hover:bg-crime-50 dark:hover:bg-crime-700/30 transition-colors duration-150">
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mr-3 mt-0.5">
+                <Bell className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-medium text-crime-800 dark:text-white mb-1">System Update Complete</div>
+                <p className="text-sm text-crime-500 dark:text-crime-400 mb-1">The system has been updated to version 1.2 with new features.</p>
+                <div className="text-xs text-crime-400 dark:text-crime-500">2 hours ago</div>
+              </div>
+            </div>
+            
+            <div className="flex items-start p-3 rounded-lg hover:bg-crime-50 dark:hover:bg-crime-700/30 transition-colors duration-150">
+              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center mr-3 mt-0.5">
+                <Settings className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-medium text-crime-800 dark:text-white mb-1">Maintenance Scheduled</div>
+                <p className="text-sm text-crime-500 dark:text-crime-400 mb-1">Scheduled maintenance on Sunday, 10 PM - 2 AM. The system may be temporarily unavailable.</p>
+                <div className="text-xs text-crime-400 dark:text-crime-500">1 day ago</div>
+              </div>
+            </div>
+            
+            <div className="flex items-start p-3 rounded-lg hover:bg-crime-50 dark:hover:bg-crime-700/30 transition-colors duration-150">
+              <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 flex items-center justify-center mr-3 mt-0.5">
+                <FileText className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-medium text-crime-800 dark:text-white mb-1">New Feature: Evidence Management</div>
+                <p className="text-sm text-crime-500 dark:text-crime-400 mb-1">Secure evidence upload and management coming in the next update.</p>
+                <div className="text-xs text-crime-400 dark:text-crime-500">3 days ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  if (!initialized) {
+    return (
+      <div className="min-h-screen bg-crime-50 dark:bg-crime-900 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/" />;
+    return null; // The useEffect will redirect to login
   }
-  
+
   return (
-    <div className="min-h-screen bg-crime-50 dark:bg-crime-900 flex flex-col">
-      <Navbar />
+    <div className="flex h-screen bg-crime-50 dark:bg-crime-900">
+      {/* Sidebar for desktop */}
+      <aside className={`
+        fixed lg:relative inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out
+        bg-white dark:bg-crime-800 border-r border-crime-100 dark:border-crime-700 shadow-sm
+        lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-b border-crime-100 dark:border-crime-700 flex items-center justify-between">
+            <Logo size="md" />
+            <button 
+              className="lg:hidden p-2 rounded-lg text-crime-500 hover:bg-crime-100 dark:hover:bg-crime-700"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="p-4">
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center mr-3 text-lg font-semibold">
+                {user?.name.charAt(0)}
+              </div>
+              <div>
+                <div className="font-medium text-crime-800 dark:text-white">{user?.name}</div>
+                <div className="text-sm text-crime-500 dark:text-crime-400 capitalize">{user?.role}</div>
+              </div>
+            </div>
+          </div>
+          
+          <nav className="mt-4 flex-grow">
+            <div className="px-3 mb-2 text-xs font-semibold text-crime-400 dark:text-crime-500 uppercase tracking-wider">
+              Main
+            </div>
+            <ul className="space-y-1 px-2">
+              {navItems.map((item) => (
+                <li key={item.path}>
+                  <button 
+                    onClick={() => {
+                      navigate(item.path);
+                      setSidebarOpen(false);
+                    }}
+                    className={`
+                      w-full px-3 py-2 flex items-center rounded-lg text-sm font-medium transition-colors duration-150
+                      ${isActive(item.path) 
+                        ? 'bg-primary text-white' 
+                        : 'text-crime-600 dark:text-crime-300 hover:bg-crime-100 dark:hover:bg-crime-700'
+                      }
+                    `}
+                  >
+                    <item.icon className="w-5 h-5 mr-3" />
+                    {item.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            
+            <div className="mt-6 px-3 mb-2 text-xs font-semibold text-crime-400 dark:text-crime-500 uppercase tracking-wider">
+              Account
+            </div>
+            <ul className="space-y-1 px-2">
+              <li>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full px-3 py-2 flex items-center rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
+                >
+                  <LogOut className="w-5 h-5 mr-3" />
+                  Logout
+                </button>
+              </li>
+            </ul>
+          </nav>
+          
+          <div className="p-4 border-t border-crime-100 dark:border-crime-700 text-xs text-crime-400 dark:text-crime-500">
+            CRMS v1.0.0 - Phase 2
+          </div>
+        </div>
+      </aside>
       
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <header className="mb-8">
-          <div className="animate-fade-in">
-            <h1 className="text-3xl font-bold text-crime-800 dark:text-white">
-              Welcome, {user?.name}
-            </h1>
-            <p className="text-crime-500 dark:text-crime-400">
-              {
-                user?.role === 'admin' 
-                  ? 'Administrative Dashboard' 
-                  : user?.role === 'investigator'
-                    ? 'Investigator Dashboard'
-                    : 'Officer Dashboard'
-              }
-            </p>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top navbar */}
+        <header className="bg-white dark:bg-crime-800 border-b border-crime-100 dark:border-crime-700 shadow-sm">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center">
+              <button 
+                className="lg:hidden p-2 rounded-lg text-crime-500 hover:bg-crime-100 dark:hover:bg-crime-700 mr-2"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <h1 className="text-lg font-semibold text-crime-800 dark:text-white">
+                Crime Record Management System
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button 
+                className="p-2 rounded-full text-crime-500 hover:bg-crime-100 dark:hover:bg-crime-700 relative"
+                onClick={() => toast.info('Notifications feature coming soon')}
+              >
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500"></span>
+              </button>
+              
+              <button 
+                className="p-2 rounded-full text-crime-500 hover:bg-crime-100 dark:hover:bg-crime-700"
+                onClick={() => toast.info('Settings feature coming soon')}
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </header>
         
-        {/* Stats Overview */}
-        <section className="mb-8 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <div 
-                key={index} 
-                className="glass-panel glass-card-hover p-6 flex items-center justify-between"
-                style={{ animationDelay: `${index * 50 + 200}ms` }}
-              >
-                <div>
-                  <p className="text-sm font-medium text-crime-500 dark:text-crime-400">{stat.title}</p>
-                  <h3 className="text-2xl font-bold text-crime-800 dark:text-white mt-1">{stat.value}</h3>
-                </div>
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stat.color}`}>
-                  <stat.icon className="w-6 h-6" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-        
-        {/* Quick Actions */}
-        <section className="mb-8 animate-fade-in" style={{ animationDelay: '250ms' }}>
-          <h2 className="text-xl font-semibold text-crime-800 dark:text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {quickActions.map((action, index) => (
-              <button
-                key={index}
-                onClick={action.action}
-                className="glass-panel glass-card-hover p-4 flex flex-col items-center text-center transition-transform duration-300 hover:scale-105"
-                style={{ animationDelay: `${index * 50 + 300}ms` }}
-              >
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
-                  <action.icon className="w-5 h-5" />
-                </div>
-                <span className="text-sm font-medium text-crime-700 dark:text-crime-300">{action.title}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-        
-        {/* Recent Cases */}
-        <section className="animate-fade-in" style={{ animationDelay: '400ms' }}>
-          <h2 className="text-xl font-semibold text-crime-800 dark:text-white mb-4">Recent Cases</h2>
-          <DataDisplay 
-            data={MOCK_CASES}
-            columns={caseColumns}
-            itemsPerPage={5}
-            emptyMessage="No cases to display"
-          />
-        </section>
-      </main>
+        {/* Page content */}
+        <main className="flex-1 overflow-auto">
+          <Routes>
+            <Route path="/" element={<DashboardOverview />} />
+            <Route path="/cases" element={<CaseManagement />} />
+            <Route path="/report-crime" element={<CrimeReportForm />} />
+            <Route path="/case/:caseId" element={<CaseDetail />} />
+            <Route path="/analytics" element={<Analytics />} />
+          </Routes>
+        </main>
+      </div>
+      
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-crime-800/50 lg:hidden z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 };
