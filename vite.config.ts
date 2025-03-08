@@ -6,9 +6,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { ConfigEnv } from 'vite';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }: ConfigEnv) => ({
   server: {
     host: "::",
     port: 8080,
@@ -28,9 +29,9 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist',
     emptyOutDir: true,
   },
-  // Override TypeScript configuration to work with JavaScript
+  // Properly set esbuild config with correct TypeScript types
   esbuild: {
     jsxInject: `import React from 'react'`,
-    jsx: 'react-jsx',
+    jsx: 'transform',  // Changed from 'react-jsx' to 'transform' which is a valid option
   },
 }));
