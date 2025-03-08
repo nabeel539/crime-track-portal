@@ -1,4 +1,36 @@
 
 // This file is a bridge for TypeScript configuration
-// It re-exports the JavaScript configuration
-export { default } from './vite.config.js';
+// It directly defines the same config as vite.config.js
+
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import path from "path";
+import { componentTagger } from "lovable-tagger";
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  server: {
+    host: "::",
+    port: 8080,
+  },
+  plugins: [
+    react(),
+    mode === 'development' &&
+    componentTagger(),
+  ].filter(Boolean),
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  // Add build configuration to ensure compatibility
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
+  // Override TypeScript configuration to work with JavaScript
+  esbuild: {
+    jsxInject: `import React from 'react'`,
+    jsx: 'react-jsx',
+  },
+}));
